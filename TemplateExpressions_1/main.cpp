@@ -1,10 +1,4 @@
-#include "OperatorConceptExpressions.h"
-
-#include <vector>
-#include <iostream>
-#include <tuple>
-#include <cassert>
-#include <functional>
+#include "TemplateExpressions_1.h"
 
 int main() {
     double tab[3] = {1.0, 2.0, 3.0};

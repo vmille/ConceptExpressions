@@ -1,0 +1,10 @@
+//
+// Created by mille on 07-Nov-18.
+//
+
+#ifndef CONCEPTEXPRESSIONS_VISITOR_H
+#define CONCEPTEXPRESSIONS_VISITOR_H
+
+
+
+#endif //CONCEPTEXPRESSIONS_VISITOR_H

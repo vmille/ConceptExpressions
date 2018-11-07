@@ -1,5 +1,5 @@
-#ifndef CONCEPTEXPRESSIONS_TEMPLATEEXPRESSION_H
-#define CONCEPTEXPRESSIONS_TEMPLATEEXPRESSION_H
+#ifndef CONCEPTEXPRESSIONS_TEMPLATEEXPRESSIONS_1_H
+#define CONCEPTEXPRESSIONS_TEMPLATEEXPRESSIONS_1_H
 #include <iostream>
 #include <vector>
 #include <cassert>
@@ -44,4 +44,4 @@ template <typename E1, typename E2>
 VectorSum<E1, E2> operator+(E1 const & u, E2 const & v) {
     return VectorSum<E1, E2>(u, v);
 }
-#endif //CONCEPTEXPRESSIONS_TEMPLATEEXPRESSION_H
+#endif //CONCEPTEXPRESSIONS_TEMPLATEEXPRESSIONS_1_H
