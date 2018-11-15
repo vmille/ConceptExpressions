@@ -3,60 +3,123 @@
 #include <iostream>
 #include <vector>
 #include <cassert>
+#include <type_traits>
+#include <tuple>
 
-template <typename TOperator, typename TOperand>
-concept bool UnaryOperator = require(TOperand d) {
-    {TOperator{}(d)}->TOperand;
+template <typename T>
+concept bool cExpression = requires {
+    typename T::operator_t;
+    typename T::operands_t;
 };
 
-template <typename TOperator, typename TOperand>
-concept bool BinaryOperator = require(TOperand d) {
-    {TOperator{}(d, d)}->TOperand;
+template <typename T>
+concept bool cUnaryExpression = cExpression<T> && requires {
+    std::tuple_size<typename T::operands_t>::value == 1;
 };
 
-template <typename Tag, typename TOperator, typename... TOperands>
+template <typename T>
+concept bool cBinaryExpression = cExpression<T> && requires {
+    std::tuple_size<typename T::operands_t>::value == 2;
+};
+
+template <typename T>
+concept bool cLiteral = cUnaryExpression<T> && requires {
+    std::is_integral<typename std::tuple_element<0, typename T::operands_t>::type>::value;
+};
+
+struct Evaluator{};
+struct Streamer{};
+
+template <size_t N>
+struct Toto {
+    double values[N];
+    explicit Toto(std::initializer_list<double> list) {
+        auto it = list.begin();
+
+        for (unsigned i = 0; i<N; ++i) values[i]=*(it++);
+    }
+};
+
+template <typename TOperator, typename... TOperands>
 struct Expression {
-    std::tuple<TOperands const &...> _operands;
+    using operator_t = TOperator;
+    using operands_t = std::tuple<TOperands...>;
 
-    Expression(TOperands const &... operands) : _operands{std::forward<TOperands...>(operands...)} {}
+    explicit Expression(TOperands const &... operands) : _operands{operands...} {}
 
-    double eval(size_t i) const { return TOperator::eval(i, _operands); }
+    operands_t _operands;
+
+    template <std::size_t N>
+    auto get() {
+        return std::get<N>(_operands);
+    }
 };
 
-struct Add_Tag{};
-template <typename TOp, typename E1, typename E2>
-using Add = Expression<Add_Tag, TOp, E1, E2>;
+template <char Symbol>
+struct Operator_Tag {
+    static constexpr char symbol{Symbol};
+};
 
-template <
+template <typename TExpression>
+constexpr char Symbol() {
+    return TExpression::operator_t::symbol;
+}
 
-//
-//struct Add_Tag{};
-//template <typename E1, typename E2>
-//auto add(E1 && e1, E2 && e2) {
-//    return [&](auto && visitor) {visitor(Add_Tag{}, std::forward<E1>(e1), std::forward<E2>(e2))};
-//}
-//
-//struct Visitor {
-//    auto operator()(Add_Tag, auto && e1, auto && e2) {return e1+e2;}
-//};
-//
-//template <typename TOperand1, typename TOperand2>
-//Expression<Add_Tag, std::decay<TOperand1>::type, std::decay<TOperand2>::type> operator+(TOperand1 && op1, TOperand2 && op2) {
-//    return {std::forward<TOperand1>(op1), std::forward<TOperand2>(op2)};
-//}
-//
-//struct Multiply_Tag{};
-//
-//template <typename TOperand1, typename TOperand2>
-//Expression<Multiply_Tag, std::decay<TOperand1>::type, std::decay<TOperand2>::type> operator*(TOperand1 && op1, TOperand2 && op2) {
-//    return {std::forward<TOperand1>(op1), std::forward<TOperand2>(op2)};
-//}
-//
-//struct UnaryMinus_Tag{};
-//
-//template <typename TOperand1>
-//Expression<UnaryMinus_Tag, std::decay<TOperand1>::type> operator-(TOperand1 && op1) {
-//    return {std::forward<TOperand1>(op1)};
-//}
+using Add_Tag = Operator_Tag<'+'>;
+
+template <typename E1, typename E2>
+cBinaryExpression operator+(E1 const & e1, E2 const & e2) {
+    return Expression<Add_Tag, E1, E2>(e1, e2);
+}
+
+using Unary_Minus_Tag = Operator_Tag<'-'>;
+
+template <typename E1>
+cUnaryExpression operator-(E1 const & e1) {
+    return Expression<Unary_Minus_Tag, E1>(e1);
+}
+
+template <typename TContext, cExpression TExpression>
+struct visitor {
+    static_assert(sizeof(TContext) == -1, "Visitor is not implemented");
+};
+
+template <typename TContext, cExpression TExpression, typename... TOperands>
+static auto apply(TExpression const & ex, TOperands &&... operands) {
+    return visitor<TContext, TExpression>::run(ex, operands...);
+}
+
+template <std::size_t N>
+struct visitor<Streamer, Toto<N>> {
+    static void run(Toto<N> const & a, std::ostream & os)  {
+        os << "Array of size " << N;
+    }
+};
+
+template <cLiteral TLiteral>
+struct visitor<Streamer, TLiteral> {
+    static void run(TLiteral const & exp, std::ostream & os)  {
+        os << exp;
+    }
+};
+
+template <cUnaryExpression TExpression1>
+struct visitor<Streamer, TExpression1> {
+    static void run(TExpression1 const & exp, std::ostream & os)  {
+        os << Symbol<TExpression1>();
+//        apply<Streamer>(exp.get<0>(), os);
+    }
+};
+
+template <cBinaryExpression TExpression2>
+struct visitor<Streamer, TExpression2> {
+    static void run(cBinaryExpression const & exp, std::ostream & os)  {
+        os << '(';
+//        apply<Streamer>(exp.get<0>(), os);
+        os << Symbol<TExpression2>();
+//        apply<Streamer>(exp.get<1>(), os);
+        os << ')';
+    }
+};
 
 #endif //CONCEPTEXPRESSIONS_CONCEPTEXPRESSIONS_H
