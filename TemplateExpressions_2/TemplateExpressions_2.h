@@ -69,11 +69,9 @@ struct size {
 template <typename Expression>
 double sum(Expression && exp) {
     std::size_t size_expression = exp(size{});
-    std::cout << size_expression << std::endl;
     double res{};
     for(size_t i = 0; i < size_expression; ++i) {
         res += exp(evaluator{i});
-        std::cout << exp(evaluator{i}) << std::endl;
     }
     return res;
 }
