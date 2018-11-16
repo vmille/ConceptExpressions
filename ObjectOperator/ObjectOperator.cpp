@@ -22,15 +22,6 @@ Vector Vector::operator+(Vector const & rhs) {
     return res;
 }
 
-Vector Vector::operator*(Vector const & rhs) {
-    assert(size() == rhs.size());
-    Vector res(size());
-    for (std::size_t i = 0; i < size(); ++i) {
-        res[i] = this->operator[](i)*rhs[i];
-    }
-    return res;
-}
-
 Vector Vector::operator-() {
     Vector res(size());
     for (std::size_t i = 0; i < size(); ++i) {

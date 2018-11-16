@@ -12,7 +12,6 @@ public:
     ~Vector() = default;
     Vector & operator=(Vector const & rhs);
     Vector operator+(Vector const & rhs);
-    Vector operator*(Vector const & rhs);
     Vector operator-();
     double & operator[](std::size_t i);
     double const & operator[](std::size_t i) const;

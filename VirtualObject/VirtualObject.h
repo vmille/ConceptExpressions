@@ -33,17 +33,6 @@ public:
 
 UnaryMinusVector operator-(VectorExpression const & lhs);
 
-class MultiplyVector : public VectorExpression {
-    VectorExpression const & _lhs;
-    VectorExpression const & _rhs;
-public:
-    MultiplyVector(VectorExpression const & lhs, VectorExpression const & rhs);
-    double operator[](std::size_t i) const override;
-    std::size_t size() const override;
-};
-
-MultiplyVector operator*(VectorExpression const & lhs, VectorExpression const & rhs);
-
 class MultiplyScalar : public VectorExpression {
     double _scalar;
     VectorExpression const & _rhs;

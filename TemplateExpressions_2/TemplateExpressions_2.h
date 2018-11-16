@@ -1,116 +1,89 @@
 #ifndef CONCEPTTEXPRESSIONS_TEMPLATEEXPRESSIONS_2_H
 #define CONCEPTTEXPRESSIONS_TEMPLATEEXPRESSIONS_2_H
 
-#include <cstddef>
-#include <tuple>
-#include <functional>
+#include <vector>
+#include <algorithm>
+#include <iostream>
 
-namespace detail {
-    template <typename F, typename Tuple, std::size_t... I>
-    constexpr decltype(auto) apply_impl(F && f, Tuple && t, std::index_sequence<I...>) {
-        return f(std::get<I>(std::forward<Tuple>(t))...);
-    }
+struct Add{};
+
+template <typename E1, typename E2>
+auto operator+(E1 && e1, E2 && e2) {
+    return [&](auto visitor) { return visitor(Add{}, e1(visitor), e2(visitor));};
 }
 
-template <typename F, typename Tuple>
-constexpr decltype(auto) apply(F && f, Tuple && t) {
-    return detail::apply_impl(std::forward<F>(f), std::forward<Tuple>(t), std::make_index_sequence<std::tuple_size<std::remove_reference_t<Tuple>>::value>{});
+struct UnaryMinus{};
+
+template <typename E1>
+auto operator-(E1 && e1) {
+    return [&](auto visitor) { return visitor(UnaryMinus{}, e1(visitor));};
 }
 
+struct MultiplyScalar{};
 
-template <size_t N>
-class Array {
-private:
-    double values[N];
-
-public:
-    double operator[](size_t i) const { return values[i]; }
-
-    double & operator[](size_t i) { return values[i]; }
-
-    double eval(size_t i) const { return values[i]; }
-
-    Array() : values{0} { }
-
-    Array(std::initializer_list<double> list) {
-        auto it = list.begin();
-        for (size_t i = 0; i < N; ++i) {
-            values[i] = *(it++);
-        }
-    }
-
-    Array(Array<N> const & array) {
-        for (size_t i = 0; i < N; ++i) {
-            values[i] = array.values[i];
-        }
-    }
-
-    template <typename TExpression>
-    Array(TExpression const & expression) {
-        for (size_t i = 0 ; i < N ; ++i) {
-            values[i] = expression.eval(i);
-        }
-    }
-
-    Array<N> & operator=(Array<N> const & array) {
-        for (size_t i = 0 ; i < N ; ++i) {
-            values[i] = array.values[i];
-        }
-        return *this;
-    }
-
-    template <typename TExpression>
-    Array<N> & operator=(TExpression const & expression) {
-        for (size_t i = 0 ; i < N ; ++i) {
-            values[i] = expression.eval(i);
-        }
-        return *this;
-    }
-};
-
-template <typename TOperator, typename... TOperands>
-struct Expression {
-    std::tuple<TOperands const & ...> _operands;
-
-    Expression(TOperands const & ... operands) : _operands{operands...} {}
-
-    double eval(size_t i) const { return TOperator::eval(i, _operands); }
-};
-
-struct AdditionOperator {
-    template <typename... TOperands>
-    static double eval(size_t i, std::tuple<TOperands...> const & operands) {
-        return apply([i](auto... items) { return (items.eval(i)+...); }, operands);
-    }
-};
-
-template <typename TOperand1, typename TOperand2>
-Expression<AdditionOperator, TOperand1, TOperand2> operator+(TOperand1 && operand1, TOperand2 && operand2) {
-    return {std::forward<TOperand1>(operand1), std::forward<TOperand2>(operand2)};
+template <typename E2>
+auto operator*(double scalar, E2 && e2) {
+    return [&](auto visitor) { return visitor(MultiplyScalar{}, scalar, e2(visitor));};
 }
 
-struct MultiplicationOperator {
-    template <typename... TOperands>
-    static double eval(size_t i, std::tuple<TOperands...> const & operands) {
-        return apply([i](auto... items) { return (items.eval(i)*...); }, operands);
-    }
-};
+struct Spread{};
 
-template <typename TOperand1, typename TOperand2>
-Expression<MultiplicationOperator, TOperand1, TOperand2> operator*(TOperand1 && operand1, TOperand2 && operand2) {
-    return {std::forward<TOperand1>(operand1), std::forward<TOperand2>(operand2)};
+template <typename E1>
+auto spread(E1 & e1) {
+    return [&](auto visitor) { return visitor(Spread{}, e1);};
 }
 
-struct UnaryMinusOperator {
-    template <typename TOperand>
-    static double eval(size_t i, std::tuple <TOperand> const & operand) {
-        return -std::get<0>(operand).eval(i);
-    }
+struct evaluator {
+
+    std::size_t _i;
+
+    explicit evaluator(std::size_t i) : _i{i} {}
+
+    template <typename E1, typename E2>
+    auto operator()(Add, E1 e1, E2 e2) { return e1+e2; }
+
+    template <typename E1>
+    auto operator()(UnaryMinus, E1 e1) { return -e1; }
+
+    template <typename E2>
+    auto operator()(MultiplyScalar, double scalar, E2 e2) { return scalar*e2; }
+
+    template <typename E1>
+    auto operator()(Spread, E1 & e1) { return e1[_i]; }
 };
 
-template <typename TOperand>
-Expression<UnaryMinusOperator, TOperand> operator-(TOperand && operand) {
-    return {std::forward<TOperand>(operand)};
+struct size {
+    template <typename E1>
+    auto operator()(Spread, E1 & e1) { return e1.size(); }
+
+    template <typename Tag, typename E1, typename E2>
+    auto operator()(Tag, E1 e1, E2 e2) { return std::min(e1, e2); }
+
+    template <typename E2>
+    auto operator()(MultiplyScalar, double e1, E2 e2) { return e2; }
+
+    template <typename Tag, typename E1>
+    auto operator()(Tag, E1 e1) { return std::numeric_limits<size_t>::max(); }
+};
+
+template <typename Expression>
+double sum(Expression && exp) {
+    std::size_t size_expression = exp(size{});
+    std::cout << size_expression << std::endl;
+    double res{};
+    for(size_t i = 0; i < size_expression; ++i) {
+        res += exp(evaluator{i});
+        std::cout << exp(evaluator{i}) << std::endl;
+    }
+    return res;
 }
+
+class Vector {
+    std::vector<double> _values;
+public :
+    Vector(std::initializer_list<double> init) : _values{init} {}
+    double operator[](std::size_t i) { return _values.at(i); }
+    std::size_t size() const { return _values.size(); }
+};
 
 #endif //CONCEPTTEXPRESSIONS_TEMPLATEEXPRESSIONS_2_H

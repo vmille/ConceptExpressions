@@ -16,12 +16,6 @@ double UnaryMinusVector::operator[](std::size_t i) const { return -_lhs[i]; }
 std::size_t UnaryMinusVector::size() const { return _lhs.size(); }
 UnaryMinusVector operator-(VectorExpression const & rhs) { return UnaryMinusVector(rhs); }
 
-
-MultiplyVector::MultiplyVector(VectorExpression const & lhs, VectorExpression const & rhs) : _lhs{lhs}, _rhs{rhs} { assert(_lhs.size() == _rhs.size()); }
-double MultiplyVector::operator[](std::size_t i) const { return _lhs[i]*_rhs[i]; }
-std::size_t MultiplyVector::size() const { return _lhs.size(); }
-MultiplyVector operator*(VectorExpression const & lhs, VectorExpression const & rhs) { return {lhs, rhs}; }
-
 MultiplyScalar::MultiplyScalar(double scalar, VectorExpression const & rhs) : _scalar{scalar}, _rhs{rhs} {}
 double MultiplyScalar::operator[](std::size_t i) const { return _scalar*_rhs[i]; }
 std::size_t MultiplyScalar::size() const { return _rhs.size(); }

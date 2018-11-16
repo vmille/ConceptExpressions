@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.5)
 project(ConceptExpressions)
-add_compile_options(-fconcepts)
+
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    add_compile_options(-fconcepts)
+endif()
 
 add_subdirectory(CLoop)
 add_subdirectory(ObjectOperator)
