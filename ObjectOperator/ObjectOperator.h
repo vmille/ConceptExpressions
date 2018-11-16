@@ -10,7 +10,7 @@ public:
     Vector(std::size_t s);
     explicit Vector(std::initializer_list<double> init);
     ~Vector() = default;
-    Vector const & operator=(Vector const & rhs);
+    Vector & operator=(Vector const & rhs);
     Vector operator+(Vector const & rhs);
     Vector operator*(Vector const & rhs);
     Vector operator-();
@@ -19,12 +19,8 @@ public:
     std::size_t size() const;
 };
 
-double sum(Vector const & v) {
-    double res{};
-    for (std::size_t i = 0; i < v.size(); ++i) {
-        res += v[i];
-    }
-    return res;
-}
+double sum(Vector const & v);
+
+Vector operator*(double d, Vector const & rhs);
 
 #endif //CONCEPTEXPRESSIONS_OBJECTOPERATOR_H

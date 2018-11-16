@@ -1,4 +1,4 @@
-#include "ObjectOperator.h"
+#include "VirtualObject.h"
 
 #include <iostream>
 
