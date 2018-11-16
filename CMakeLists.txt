@@ -3,6 +3,7 @@ project(ConceptExpressions)
 add_compile_options(-fconcepts)
 
 add_subdirectory(CLoop)
+add_subdirectory(ObjectOperator)
 add_subdirectory(TemplateExpressions_1)
 add_subdirectory(TemplateExpressions_2)
 add_subdirectory(ConceptExpressions_1)
