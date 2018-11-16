@@ -5,8 +5,7 @@
 #include <cassert>
 
 template <typename E>
-class VectorExpression {
-public:
+struct VectorExpression {
     double operator[](size_t i) const { return static_cast<E const &>(*this)[i]; }
     size_t size() const { return static_cast<E const &>(*this).size(); }
 };

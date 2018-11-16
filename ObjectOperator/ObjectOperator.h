@@ -7,8 +7,8 @@
 class Vector {
     std::vector<double> _values;
 public:
-    Vector(std::size_t s);
-    explicit Vector(std::initializer_list<double> init);
+    explicit Vector(std::size_t s);
+    Vector(std::initializer_list<double> init);
     ~Vector() = default;
     Vector & operator=(Vector const & rhs);
     Vector operator+(Vector const & rhs);
