@@ -5,43 +5,97 @@
 #include <cassert>
 
 template <typename E>
-class VectorEx {
+class VectorExpression {
 public:
     double operator[](size_t i) const { return static_cast<E const &>(*this)[i]; }
     size_t size() const { return static_cast<E const &>(*this).size(); }
 };
 
-class Vector : public VectorEx<Vector> {
-    std::vector<double> elems;
-public:
-    double operator[](size_t i) const { return elems[i]; }
-    double & operator[](size_t i) { return elems[i]; }
-    size_t size() const { return elems.size(); }
-    Vector(size_t n) : elems(n) {}
-    // construct vector using initializer list
-    Vector(std::initializer_list<double> init) : elems{init} {}
-
-    // A Vec can be constructed from any VectorEx, forcing its evaluation.
-    template <typename E>
-    explicit Vector(VectorEx<E> const & vec) : elems(vec.size()) {
-        for (size_t i = 0 ; i != vec.size() ; ++i) {
-            elems[i] = vec[i];
-        }
-    }
-};
-
 template <typename E1, typename E2>
-class VectorSum : public VectorEx<VectorSum<E1, E2>> {
+class AddVector : public VectorExpression<AddVector<E1, E2>> {
     E1 const & _u;
     E2 const & _v;
 public:
-    VectorSum(E1 const & u, E2 const & v) : _u(u), _v(v) { }
+    AddVector(E1 const & u, E2 const & v) : _u{u}, _v{v} { }
     double operator[](size_t i) const { return _u[i]+_v[i]; }
     size_t size() const { return _u.size(); }
 };
 
 template <typename E1, typename E2>
-VectorSum<E1, E2> operator+(E1 const & u, E2 const & v) {
-    return VectorSum<E1, E2>(u, v);
+AddVector<E1, E2> operator+(E1 const & u, E2 const & v) {
+    return AddVector<E1, E2>(u, v);
 }
+
+template <typename E1>
+class UnaryMinusVector : public VectorExpression<UnaryMinusVector<E1>> {
+    E1 const & _u;
+public:
+    explicit UnaryMinusVector(E1 const & u) : _u{u} {}
+    double operator[](size_t i) const { return -_u[i]; }
+    size_t size() const { return _u.size(); }
+};
+
+template <typename E1>
+UnaryMinusVector<E1> operator-(E1 const & u) {
+    return UnaryMinusVector<E1>(u);
+}
+
+template <typename E1, typename E2>
+class MultiplyVector : public VectorExpression<MultiplyVector<E1, E2>> {
+    E1 const & _u;
+    E2 const & _v;
+public:
+    MultiplyVector(E1 const & u, E2 const & v) : _u{u}, _v{v} { }
+    double operator[](size_t i) const { return _u[i]*_v[i]; }
+    size_t size() const { return _u.size(); }
+};
+
+template <typename E1, typename E2>
+MultiplyVector<E1, E2> operator*(E1 const & u, E2 const & v) {
+    return MultiplyVector<E1, E2>(u, v);
+}
+
+template <typename E2>
+class MultiplyScalar : public VectorExpression<MultiplyScalar<E2>> {
+    double _scalar;
+    E2 const & _v;
+public:
+    MultiplyScalar(double scalar, E2 const & v) : _scalar{scalar}, _v{v} { }
+    double operator[](size_t i) const { return _scalar*_v[i]; }
+    size_t size() const { return _v.size(); }
+};
+
+template <typename E2>
+MultiplyScalar<E2> operator*(double scalar, E2 const & v) {
+    return MultiplyScalar<E2>(scalar, v);
+}
+
+class Vector : public VectorExpression<Vector> {
+    std::vector<double> _values;
+public:
+    double operator[](size_t i) const { return _values[i]; }
+    size_t size() const { return _values.size(); }
+    Vector(size_t n) : _values(n) {}
+    // construct vector using initializer list
+    Vector(std::initializer_list<double> init) : _values{init} {}
+
+    // A Vec can be constructed from any VectorExpression, forcing its evaluation.
+    template <typename E>
+    explicit Vector(VectorExpression<E> const & exp) : _values(exp.size()) {
+        for (size_t i = 0 ; i != exp.size() ; ++i) {
+            _values[i] = exp[i];
+        }
+    }
+};
+
+template <typename E>
+double sum(VectorExpression<E> const & exp) {
+    double res{};
+    for (size_t i = 0 ; i != exp.size() ; ++i) {
+        res += exp[i];
+    }
+    return res;
+}
+
+
 #endif //CONCEPTEXPRESSIONS_TEMPLATEEXPRESSIONS_1_H
