@@ -14,7 +14,7 @@ struct Evaluator {};
 
 template <>
 struct visitor<Evaluator, UnaryMinusTag> {
-    template <typename TExpression>
+    template <cUnaryExpression TExpression>
     static double run(TExpression const & exp, std::size_t i) {
         return -apply<Evaluator>(get<0>(exp), i);
     }
@@ -22,7 +22,7 @@ struct visitor<Evaluator, UnaryMinusTag> {
 
 template <>
 struct visitor<Evaluator, AddTag> {
-    template <typename TExpression>
+    template <cBinaryExpression TExpression>
     static double run(TExpression const & exp, std::size_t i) {
         return apply<Evaluator>(get<0>(exp), i) + apply<Evaluator>(get<1>(exp), i);
     }
@@ -30,26 +30,19 @@ struct visitor<Evaluator, AddTag> {
 
 template <>
 struct visitor<Evaluator, MultiplyTag> {
-    template <typename TExpression>
+    template <cBinaryExpression TExpression>
     static double run(TExpression const & exp, std::size_t i) {
         return get<0>(exp) * apply<Evaluator>(get<1>(exp), i);
     }
 };
 
-template <typename T> requires Sizeable<T> && IndexedAccess<T>
-struct visitor<Evaluator, T> {
-    static std::size_t run(T const & array) {
-        return array.size();
-    }
-};
-
 template <>
 struct visitor<Evaluator, SumTag> {
-    template <typename TExpression>
+    template <cUnaryExpression TExpression>
     static double run(TExpression const & exp) {
         double res{};
-        for (std::size_t i = 0; i < visitor<Evaluator, SizeTag>::run(get<0>(exp)); ++i) {
-            res += apply<Evaluator>(get<0>(exp), i)
+        for (std::size_t i = 0; i < apply<Evaluator>(size(exp)); ++i) {
+            res += apply<Evaluator>(get<0>(exp), i);
         }
         return res;
     }

@@ -31,19 +31,43 @@ struct SSymbol<MultiplyTag> {
     static constexpr char value = '*';
 };
 
-template <>
-struct SSymbol<SumTag> {
-    static constexpr char const * value = "sum:";
-};
-
 template <typename T>
 constexpr auto Symbol() {
     return SSymbol<typename T::tag>::value;
 }
 
-template <typename T> requires Sizeable<T> && IndexedAccess<T>
-struct visitor<Streamer, T> {
-    static void run(T const & array, std::ostream & os) {
+template <typename T>
+concept bool cSymbol = requires {
+    {Symbol<T>>()}
+};
+
+template <>
+struct visitor<Streamer, SumTag> {
+    template <cUnaryExpression TExpression>
+    static void run(TExpression const & exp, std::ostream & os) {
+        os << "sum(" << apply<Streamer>(get<0>(exp), os) << ')';
+    }
+};
+
+template <typename TTag>
+struct visitor<Streamer, TTag> {
+    template <typename TExpression> requires cUnaryExpression<TExpression> && cSymbol<TExpression>
+    static void run(TExpression const & exp, std::ostream & os) {
+        os << Symbol<TExpression>();
+        os << apply<Streamer>(get<0>(exp), os);
+    }
+
+    template <typename TExpression> requires cBinaryExpression<TExpression> && cSymbol<TExpression>
+    static void run(TExpression const & exp, std::ostream & os) {
+        os << '(';
+        os << apply<Streamer>(get<0>(exp), os);
+        os << Symbol<TExpression>();
+        os << apply<Streamer>(get<0>(exp), os);
+        os << ')';
+    }
+
+    template <cReduceable TReduce>
+    static void run(TReduce && array, std::ostream & os) {
         os << '[';
         bool is_first = true;
         for (unsigned i = 0; i < array.size(); ++i) {
@@ -57,25 +81,12 @@ struct visitor<Streamer, T> {
         }
         os << ']';
     }
-};
 
-template <cUnaryExpression TExpression>
-struct visitor<Streamer, TExpression> {
-    static void run(TExpression const & exp, std::ostream & os) {
-        os << Symbol<TExpression>();
-        os << apply<Streamer>(get<0>(exp), os);
+    template <cArithmetic T>
+    static void run(T && scalar, std::ostream & os) {
+        os << scalar;
     }
 };
 
-template <cBinaryExpression TExpression>
-struct visitor<Streamer, TExpression> {
-    static void run(TExpression const & exp, std::ostream & os) {
-        os << '(';
-        os << apply<Streamer>(get<0>(exp), os);
-        os << Symbol<TExpression>();
-        os << apply<Streamer>(get<0>(exp), os);
-        os << ')';
-    }
-};
 
 #endif //CONCEPTEXPRESSIONS_STREAMER_H

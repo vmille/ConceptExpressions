@@ -5,12 +5,11 @@
 #ifndef CONCEPTEXPRESSIONS_COMMONVISITORS_H
 #define CONCEPTEXPRESSIONS_COMMONVISITORS_H
 
+#include "Expressions.h"
 #include "Visitor.h"
+#include <limits>
 
 struct SizeTag{};
-
-template <typename T>
-concept bool cSize = cUnaryExpression<T> && std::is_same<T, SizeTag>::value;
 
 template <typename E1>
 auto size(E1 && e1) {
@@ -20,23 +19,23 @@ auto size(E1 && e1) {
 template <typename TContext>
 struct visitor<TContext, SizeTag> {
     template <cUnaryExpression TExpression>
-    static std::size_t run(TExpression const & exp) {
-        return run(get<0>(exp);
+    static std::size_t run(TExpression && exp) {
+        return run(get<0>(exp));
     }
 
     template <cBinaryExpression TExpression>
-    static std::size_t run(TExpression const & exp) {
+    static std::size_t run(TExpression && exp) {
         return std::min(run(get<0>(exp)), run(get<1>(exp)));
     }
 
-    template <typename T> requires Sizeable<T>
-    static std::size_t run(T const & array) {
+    template <cSizeable T>
+    static std::size_t run(T && array) {
         return array.size();
     }
 
-    template <typename T>
-    static std::size_t run(T const & other) {
-        return std::numeric_limit<std::size_t>::max();
+    template <cArithmetic T>
+    static std::size_t run(T && other) {
+        return std::numeric_limits<std::size_t>::max();
     }
 };
 

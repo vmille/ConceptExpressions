@@ -7,16 +7,6 @@
 
 #include <cstddef>
 
-template <typename T>
-concept bool Sizeable = requires(T t) {
-    {t.size()}->std::size_t;
-};
-
-template <typename T>
-concept bool IndexedAccess = requires(T t, std::size_t i) {
-    {t[i]}->double;
-};
-
 template <std::size_t N>
 struct Array {
     double _values[N];
