@@ -8,6 +8,7 @@
 #include "Array.h"
 #include "Visitor.h"
 #include "Expressions.h"
+#include "CommonVisitors.h"
 #include <iostream>
 
 struct Streamer {};
@@ -33,11 +34,6 @@ struct SSymbol<MultiplyTag> {
 template <>
 struct SSymbol<SumTag> {
     static constexpr char const * value = "sum:";
-};
-
-template <>
-struct SSymbol<SumTag> {
-    static constexpr char const * value = "size:";
 };
 
 template <typename T>

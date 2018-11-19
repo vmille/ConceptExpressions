@@ -8,13 +8,13 @@
 #include <type_traits>
 #include <functional>
 
-template <typename Context, cExpression TExpression>
+template <typename Context, cExpression TTag>
 struct visitor {
     static_assert(sizeof(Context) == -1, "Need to specialize visitor");
 };
 
 template <typename Context, typename TExpression, typename... Operands>
-auto apply(TExpression const & expression, Operands &&... operands) {
+auto apply(TExpression && expression, Operands &&... operands) {
     return visitor<Context, std::decay_t<TExpression>>::run(std::forward<TExpression>(expression), std::forward<Operands...>(operands...));
 }
 

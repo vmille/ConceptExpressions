@@ -18,13 +18,13 @@ concept bool cExpression = true;
 
 template <typename T>
 concept bool cUnaryExpression = cExpression<T> && requires(T t) {
-{get<0>(t)}
+    {get<0>(t)}
 };
 
 template <typename T>
 concept bool cBinaryExpression = cExpression<T> && requires(T t) {
-{get<0>(t)}
-{get<1>(t)}
+    {get<0>(t)}
+    {get<1>(t)}
 };
 
 template <typename Operator, cExpression... Expressions>
@@ -41,25 +41,35 @@ struct Expression {
     }
 };
 
-template <typename Operator, cExpression TExpression>
-using UnaryExpression = Expression<Operator, TExpression>;
+template <cExpression Operator, cExpression TExpression1>
+using UnaryExpression = Expression<Operator, TExpression1>;
 
-template <typename Operator, cExpression TExpression, cExpression Expression2>
-using BinaryExpression = Expression<Operator, TExpression, TExpression>;
+template <typename Operator, cExpression TExpression1, cExpression Expression2>
+using BinaryExpression = Expression<Operator, TExpression1, Expression2>;
 
 struct UnaryMinusTag{};
+
+template <typename T>
+concept bool cUnaryMinus = cUnaryExpression<T> && std::is_same<T, UnaryMinusTag>::value;
+
 struct AddTag{};
+
+template <typename T>
+concept bool cAdd = cBinaryExpression<T> && std::is_same<T, AddTag>::value;
+
 struct MultiplyTag{};
+
+template <typename T>
+concept bool cMultiply = cBinaryExpression<T> && std::is_same<T, MultiplyTag>::value;
+
 struct SumTag{};
+
+template <typename T>
+concept bool cSum = cUnaryExpression<T> && std::is_same<T, SumTag>::value;
 
 template <typename E1>
 auto operator-(E1 && e1) {
     return UnaryExpression<UnaryMinusTag, E1>(std::forward<E1>(e1));
-}
-
-template <typename E1>
-auto sum(E1 && e1) {
-    return UnaryExpression<SumTag, E1>(std::forward<E1>(e1));
 }
 
 template <typename E1, typename E2>
@@ -67,11 +77,14 @@ auto operator+(E1 && e1, E2 && e2) {
     return BinaryExpression<AddTag, E1, E2>(std::forward<E1>(e1), std::forward<E2>(e2));
 }
 
-template <typename E2>
-auto operator*(double scalar, E2 && e2) {
-    return BinaryExpression<MultiplyTag, double, E2>(scalar, std::forward<E2>(e2));
+template <typename E1, typename E2>
+auto operator*(E1 && e1, E2 && e2) {
+    return BinaryExpression<MultiplyTag, E1, E2>(std::forward<E1>(e1), std::forward<E2>(e2));
 }
 
-
+template <typename E1>
+auto sum(E1 && e1) {
+    return UnaryExpression<SumTag, E1>(std::forward<E1>(e1));
+}
 
 #endif //CONCEPTEXPRESSIONS_EXPRESSIONS_H
