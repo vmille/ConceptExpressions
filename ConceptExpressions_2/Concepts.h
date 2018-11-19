@@ -31,11 +31,6 @@ concept bool cBinaryExpression = cExpression<T> && requires(T t) {
     {get<1>(t)}
 };
 
-struct UnaryMinusTag {};
-struct AddTag{};
-struct MultiplyTag{};
-struct SumTag{};
-
 template <typename T>
 concept bool cArithmetic = std::is_arithmetic<T>::value;
 

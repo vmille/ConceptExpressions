@@ -9,6 +9,11 @@
 #include <tuple>
 #include <functional>
 
+struct UnaryMinusTag {};
+struct AddTag{};
+struct MultiplyTag{};
+struct SumTag{};
+
 template <typename Operator, cExpression... Expressions>
 struct Expression {
     using operator_t = Operator;

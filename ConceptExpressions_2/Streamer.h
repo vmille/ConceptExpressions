@@ -44,25 +44,25 @@ concept bool cSymbol = requires {
 template <>
 struct visitor<Streamer, SumTag> {
     template <cUnaryExpression TExpression>
-    static void run(TExpression const & exp, std::ostream & os) {
-        os << "sum(" << apply<Streamer>(get<0>(exp), os) << ')';
+    static void run(TExpression && exp, std::ostream & os) {
+        os << "sum(" << apply<Streamer>(get<0>(std::forward<TExpression>(exp)), os) << ')';
     }
 };
 
 template <typename TTag>
 struct visitor<Streamer, TTag> {
     template <typename TExpression> requires cUnaryExpression<TExpression> && cSymbol<TExpression>
-    static void run(TExpression const & exp, std::ostream & os) {
+    static void run(TExpression && exp, std::ostream & os) {
         os << Symbol<TExpression>();
-        os << apply<Streamer>(get<0>(exp), os);
+        os << apply<Streamer>(get<0>(std::forward<TExpression>(exp)), os);
     }
 
     template <typename TExpression> requires cBinaryExpression<TExpression> && cSymbol<TExpression>
-    static void run(TExpression const & exp, std::ostream & os) {
+    static void run(TExpression && exp, std::ostream & os) {
         os << '(';
-        os << apply<Streamer>(get<0>(exp), os);
+        os << apply<Streamer>(get<0>(std::forward<TExpression>(exp)), os);
         os << Symbol<TExpression>();
-        os << apply<Streamer>(get<0>(exp), os);
+        os << apply<Streamer>(get<0>(std::forward<TExpression>(exp)), os);
         os << ')';
     }
 
